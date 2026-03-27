@@ -139,6 +139,7 @@
               <datalist id="employeeNamesList"></datalist>
               <datalist id="assetIdList"></datalist>
               <datalist id="assetNameList"></datalist>
+              <datalist id="assetTypeList"></datalist>
               
               <div class="row g-3 mb-3">
                 <div class="col-md-4">
@@ -156,7 +157,11 @@
                   <label class="form-label text-primary fw-bold">เลขครุภัณฑ์ (ถ้ามี)</label>
                   <input type="text" class="form-control" name="assetId" id="r_assetId" list="assetIdList" onchange="autoFillById()" placeholder="พิมพ์เลขเพื่อค้นหา...">
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-4">
+                  <label class="form-label text-primary fw-bold">ประเภทครุภัณฑ์</label>
+                  <input type="text" class="form-control" name="assetType" id="r_assetType" list="assetTypeList" placeholder="เลือกหรือพิมพ์ประเภท..." required>
+                </div>
+                <div class="col-md-4">
                   <label class="form-label text-primary fw-bold">รายการ</label>
                   <input type="text" class="form-control" name="assetName" id="r_assetName" list="assetNameList" onchange="autoFillByName()" placeholder="พิมพ์ชื่อเพื่อค้นหา..." required>
                 </div>
@@ -317,7 +322,7 @@
 
   <script>
   // --- ตั้งค่า API URL ---
-    const API_URL = "https://script.google.com/macros/s/AKfycbzxOyk471lHL1SOvnm8y_0GFt6bS93tYPpRwsc2nArkQCutXIUu_0T5S9c7gGFfzCmZ/exec"; // <--- วาง Web App URL ตรงนี้
+    const API_URL = "https://script.google.com/macros/s/AKfycbxY4pUweX5blxEOjwCy5MRa1rowT6QeHCkYhuLMS_6Zv_XR_tgxYQjfsMgpfbjIajIv/exec"; // <--- วาง Web App URL ตรงนี้
 
     // --- ฟังก์ชันสื่อสารกับ Backend ---
     async function callBackend(action, payload = null) {
@@ -445,6 +450,14 @@
       var tS = document.getElementById('typeSelect'), mS = document.getElementById('moneySelect');
       tS.innerHTML = ""; mS.innerHTML = "";
       cfg.types.forEach(x => { tS.add(new Option(x, x.trim())); }); cfg.moneyTypes.forEach(x => { mS.add(new Option(x, x.trim())); });
+      
+      var tList = document.getElementById('assetTypeList');
+      if(tList) {
+          tList.innerHTML = "";
+          cfg.types.forEach(x => tList.innerHTML += `<option value="${x.trim()}">`);
+          tList.innerHTML += `<option value="สาธารณูปโภค">`;
+          tList.innerHTML += `<option value="อาคารสิ่งก่อสร้าง">`;
+      }
     }
 
     function filterDashboard(mode) {
@@ -661,6 +674,7 @@
     function fillFormWithAsset(asset) {
         if(asset) {
             document.getElementById('r_assetId').value = asset[4] || "";
+            document.getElementById('r_assetType').value = asset[0] || ""; // ดึงประเภทอัตโนมัติ
             document.getElementById('r_assetName').value = asset[3] || "";   
             document.getElementById('r_price').value = asset[8] || "";       
             document.getElementById('r_yearAcq').value = asset[6] || "";     
@@ -753,16 +767,17 @@
         var html = "";
         for(var i = 0; i < show.length; i++) {
             var r = show[i];
-            var imgLink = (r[14] && r[14].startsWith("http")) ? `<a href="${r[14]}" target="_blank" class="badge bg-info text-decoration-none">ดูรูป</a>` : "-";
+            // รหัสภาพถูกเลื่อนไปช่องที่ 15
+            var imgLink = (r[15] && r[15].startsWith("http")) ? `<a href="${r[15]}" target="_blank" class="badge bg-info text-decoration-none">ดูรูป</a>` : "-";
             html += `<tr>
                 <td>${r[0]}</td><td>${r[1]}<br><small class="text-muted">${r[2]}</small></td>
-                <td>${r[5]||"-"}<br><small class="text-primary">${r[6]}</small></td>
-                <td>${r[13]}</td><td>${imgLink}</td>
-                <td class="text-primary">${r[17]||"-"}</td><td>${r[18]||"-"}</td><td class="text-success">${r[19]||"-"}</td>
-                <td><span class="badge ${r[15]=='ซ่อมเสร็จแล้ว'?'bg-success':(r[15]=='รอจำหน่าย'?'bg-danger':'bg-secondary')}">${r[15]||""}</span></td>
-                <td>${r[16]||"-"}</td>
+                <td>${r[7]||"-"}<br><small class="text-primary">${r[6]||""}</small></td>
+                <td>${r[14]}</td><td>${imgLink}</td>
+                <td class="text-primary">${r[18]||"-"}</td><td>${r[19]||"-"}</td><td class="text-success">${r[20]||"-"}</td>
+                <td><span class="badge ${r[16]=='ซ่อมเสร็จแล้ว'?'bg-success':(r[16]=='รอจำหน่าย'?'bg-danger':'bg-secondary')}">${r[16]||""}</span></td>
+                <td>${r[17]||"-"}</td>
                 <td style="display:${isAuth ? 'table-cell' : 'none'}">
-                   <button class="btn btn-sm btn-warning mb-1" onclick="openEditModal('${r[0]}','${r[15]}','${r[16]}','${r[17]||''}','${r[18]||''}','${r[19]||''}')"><i class="fa-solid fa-pen"></i></button>
+                   <button class="btn btn-sm btn-warning mb-1" onclick="openEditModal('${r[0]}','${r[16]}','${r[17]}','${r[18]||''}','${r[19]||''}','${r[20]||''}')"><i class="fa-solid fa-pen"></i></button>
                    <button class="btn btn-sm btn-primary mb-1" onclick="printReportTicket('${r[0]}')"><i class="fa-solid fa-print"></i></button>
                 </td>
              </tr>`;
@@ -901,5 +916,4 @@
     }
   </script>
 </body>
-
 </html>
